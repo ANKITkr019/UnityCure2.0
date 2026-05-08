@@ -5,9 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, BedDouble, UserRound, ArrowLeftRight,
   Megaphone, BarChart3, AlertTriangle, LogOut,
-  Menu, Bell, Heart, ChevronRight
+  Menu, Bell, Heart, ChevronRight, Video
 } from 'lucide-react';
-
+import DoctorCall from './sections/DoctorCall';
 import ResourceManager from './sections/ResourceManager';
 import DoctorManagement from './sections/DoctorManagement';
 import PatientTransfer from './sections/PatientTransfer';
@@ -17,6 +17,7 @@ import EmergencyAlerts from './sections/EmergencyAlerts';
 import AIAssistant from '../../components/common/AIAssistant';
 
 const navItems = [
+  { id: 'doctorcall', label: 'Video Consultation', icon: Video },
   { id: 'resources',  label: 'Manage Resources',          icon: BedDouble },
   { id: 'doctors',    label: 'Doctor Management',          icon: UserRound },
   { id: 'transfer',   label: 'Patient Transfer',           icon: ArrowLeftRight },
@@ -26,6 +27,7 @@ const navItems = [
 ];
 
 const sectionMap = {
+  doctorcall: <DoctorCall />,
   resources: <ResourceManager />,
   doctors:   <DoctorManagement />,
   transfer:  <PatientTransfer />,

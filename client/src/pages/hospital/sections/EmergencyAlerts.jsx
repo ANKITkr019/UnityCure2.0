@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Send, Bell, Clock, CheckCircle, Zap } from 'lucide-react';
+import { AlertTriangle, Send, Bell, Clock, CheckCircle, Zap, Phone } from 'lucide-react';
+import { io } from 'socket.io-client';
 import api from '../../../services/api';
 import toast from 'react-hot-toast';
 
@@ -25,6 +26,49 @@ export default function EmergencyAlerts() {
   const [sending, setSending] = useState(false);
   const [alerts, setAlerts] = useState(recentAlerts);
   const [activeTab, setActiveTab] = useState('send');
+
+  // ✅ NEW — Real-time SOS monitoring
+  useEffect(() => {
+    const socket = io('http://localhost:5000');
+
+    socket.on('connect', () => {
+      socket.emit('join-hospital-monitor', { hospitalId: 'hospital' });
+    });
+
+    socket.on('sos-alert', (data) => {
+      const newAlert = {
+        id: data.alertId || Date.now(),
+        type: 'SOS Emergency',
+        message: data.userName + ' needs help. ' + data.message + ' | ' + data.location.address,
+        severity: 'critical',
+        time: 'Just now',
+        resolved: false,
+        isSOS: true,
+        phone: data.phone,
+      };
+      setAlerts(prev => [newAlert, ...prev]);
+      setActiveTab('history');
+      toast.error('🚨 SOS Alert received!', { duration: 6000 });
+
+      // Beep sound
+      try {
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        osc.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.start();
+        setTimeout(() => osc.stop(), 600);
+      } catch {}
+    });
+
+    socket.on('sos-acknowledged', (data) => {
+      setAlerts(prev => prev.map(a =>
+        a.id === data.alertId ? { ...a, resolved: true } : a
+      ));
+    });
+
+    return () => socket.disconnect();
+  }, []);
 
   const handleSend = async () => {
     if (!form.message.trim()) {
@@ -57,7 +101,6 @@ export default function EmergencyAlerts() {
 
   return (
     <div className="space-y-6">
-      {/* Active Alert Banner */}
       {alerts.some(a => !a.resolved && a.severity === 'critical') && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -74,7 +117,6 @@ export default function EmergencyAlerts() {
         </motion.div>
       )}
 
-      {/* Tabs */}
       <div className="flex gap-2">
         {['send', 'history'].map(tab => (
           <button
@@ -93,28 +135,17 @@ export default function EmergencyAlerts() {
 
       <AnimatePresence mode="wait">
         {activeTab === 'send' ? (
-          <motion.div
-            key="send"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            className="space-y-4"
-          >
-            {/* Send Form */}
+          <motion.div key="send" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="space-y-4">
             <div className="glass rounded-2xl p-6 space-y-4">
               <h3 className="text-white font-semibold flex items-center gap-2">
                 <Zap size={18} className="text-red-400" /> Broadcast Emergency Alert
               </h3>
               <p className="text-slate-400 text-sm">Alert will be sent to all connected hospitals and emergency services.</p>
-
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-slate-400 mb-1.5 block">Alert Type</label>
-                  <select
-                    value={form.type}
-                    onChange={e => setForm({ ...form, type: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500/50"
-                  >
+                  <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500/50">
                     {alertTypes.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
                   </select>
                 </div>
@@ -124,13 +155,9 @@ export default function EmergencyAlerts() {
                     {severities.map(s => {
                       const cfg = severityConfig[s];
                       return (
-                        <button
-                          key={s}
-                          onClick={() => setForm({ ...form, severity: s })}
+                        <button key={s} onClick={() => setForm({ ...form, severity: s })}
                           className={'flex-1 py-2 rounded-xl text-xs border capitalize font-medium transition-all ' +
-                            (form.severity === s ? cfg.bg + ' ' + cfg.color : 'bg-white/5 border-white/10 text-slate-500 hover:text-white')
-                          }
-                        >
+                            (form.severity === s ? cfg.bg + ' ' + cfg.color : 'bg-white/5 border-white/10 text-slate-500 hover:text-white')}>
                           {cfg.label}
                         </button>
                       );
@@ -138,31 +165,20 @@ export default function EmergencyAlerts() {
                   </div>
                 </div>
               </div>
-
               <div>
                 <label className="text-xs text-slate-400 mb-1.5 block">Alert Message</label>
-                <textarea
-                  value={form.message}
-                  onChange={e => setForm({ ...form, message: e.target.value })}
-                  rows={4}
-                  placeholder="Describe the emergency situation in detail..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500/50 resize-none"
-                />
+                <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })}
+                  rows={4} placeholder="Describe the emergency situation in detail..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500/50 resize-none" />
               </div>
-
-              <button
-                onClick={handleSend}
-                disabled={sending}
-                className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-60"
-              >
+              <button onClick={handleSend} disabled={sending}
+                className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-60">
                 {sending
                   ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  : <><Send size={16} /> Send Emergency Alert</>
-                }
+                  : <><Send size={16} /> Send Emergency Alert</>}
               </button>
             </div>
 
-            {/* Quick Templates */}
             <div className="glass rounded-2xl p-5">
               <h4 className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-3">Quick Templates</h4>
               <div className="space-y-2">
@@ -171,11 +187,8 @@ export default function EmergencyAlerts() {
                   { text: 'O+ and O- blood urgently needed. Contact blood bank immediately.', severity: 'high', type: 'Blood Shortage' },
                   { text: 'Mass casualty event — activating emergency protocol.', severity: 'critical', type: 'Mass Casualty' },
                 ].map((t, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setForm({ type: t.type, severity: t.severity, message: t.text })}
-                    className="w-full text-left px-4 py-3 rounded-xl bg-white/3 border border-white/5 hover:border-white/15 transition-all"
-                  >
+                  <button key={i} onClick={() => setForm({ type: t.type, severity: t.severity, message: t.text })}
+                    className="w-full text-left px-4 py-3 rounded-xl bg-white/3 border border-white/5 hover:border-white/15 transition-all">
                     <div className="text-white text-xs font-medium mb-0.5">{t.type}</div>
                     <div className="text-slate-500 text-xs">{t.text}</div>
                   </button>
@@ -184,34 +197,29 @@ export default function EmergencyAlerts() {
             </div>
           </motion.div>
         ) : (
-          <motion.div
-            key="history"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            className="space-y-3"
-          >
+          <motion.div key="history" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="space-y-3">
             {alerts.map((alert, i) => {
               const cfg = severityConfig[alert.severity];
               return (
-                <motion.div
-                  key={alert.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
+                <motion.div key={alert.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.07 }}
-                  className={'glass rounded-2xl p-5 border ' + (alert.resolved ? 'opacity-60' : '') + ' ' + cfg.bg}
-                >
+                  className={'glass rounded-2xl p-5 border ' + (alert.resolved ? 'opacity-60' : '') + ' ' + cfg.bg}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <div className={'w-10 h-10 rounded-xl ' + cfg.bg + ' flex items-center justify-center shrink-0'}>
                         <Bell size={18} className={cfg.color + (alert.resolved ? '' : ' animate-pulse')} />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-white font-semibold text-sm">{alert.type}</span>
                           <span className={'text-xs px-2 py-0.5 rounded-full border font-medium ' + cfg.bg + ' ' + cfg.color}>
                             {cfg.label}
                           </span>
+                          {alert.isSOS && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold">
+                              🚨 SOS
+                            </span>
+                          )}
                           {alert.resolved && (
                             <span className="text-xs px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-400 border border-teal-500/30">
                               Resolved
@@ -219,19 +227,19 @@ export default function EmergencyAlerts() {
                           )}
                         </div>
                         <div className="text-slate-400 text-sm mt-1">{alert.message}</div>
+                        {alert.phone && (
+                          <a href={'tel:' + alert.phone} className="flex items-center gap-1 text-teal-400 text-xs mt-1 hover:underline">
+                            <Phone size={11} /> {alert.phone}
+                          </a>
+                        )}
                         <div className="flex items-center gap-1 mt-2 text-xs text-slate-600">
                           <Clock size={11} /> {alert.time}
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => toggleResolve(alert.id)}
+                    <button onClick={() => toggleResolve(alert.id)}
                       className={'shrink-0 p-2 rounded-xl transition-all ' +
-                        (alert.resolved
-                          ? 'bg-slate-500/10 text-slate-500 hover:bg-slate-500/20'
-                          : 'bg-teal-500/10 text-teal-400 hover:bg-teal-500/20'
-                        )}
-                    >
+                        (alert.resolved ? 'bg-slate-500/10 text-slate-500' : 'bg-teal-500/10 text-teal-400 hover:bg-teal-500/20')}>
                       <CheckCircle size={16} />
                     </button>
                   </div>

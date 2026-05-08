@@ -17,6 +17,7 @@ import Events from './sections/Events';
 import Wellness from './sections/Wellness';
 import Feedback from './sections/Feedback';
 import AIAssistant from '../../components/common/AIAssistant';
+import SOSButton from '../../components/common/SOSButton';
 
 const navItems = [
   { id: 'overview',      label: 'Dashboard',     icon: LayoutDashboard },
@@ -184,6 +185,7 @@ export default function UserDashboard() {
           </AnimatePresence>
         </div>
       </div>
+      <SOSButton variant="floating" />
       <AIAssistant />   
     </div>
   );

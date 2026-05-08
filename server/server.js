@@ -21,6 +21,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/user', require('./routes/userRoutes'));
 app.use('/api/hospital', require('./routes/hospitalRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/sos', require('./routes/sosRoutes'));
 
 // Health check
 app.get('/', (req, res) => res.json({ message: '🏥 UnityCure API running' }));
@@ -34,5 +35,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Server error', error: err.message });
 });
 
+const http = require('http');
+const initSocket = require('./socket');
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+const server = http.createServer(app);
+
+initSocket(server);
+const io = initSocket(server);
+app.set('io', io);
+
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

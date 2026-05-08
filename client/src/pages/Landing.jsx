@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import SOSButton from '../components/common/SOSButton';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -195,12 +196,7 @@ function Hero() {
           </button>
 
           {/* SOS Button */}
-          <button
-            onClick={handleSOS}
-            className="sos-btn px-8 py-4 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-bold text-lg transition-all flex items-center gap-2"
-          >
-            <Phone size={20} className="animate-pulse" /> SOS Emergency
-          </button>
+          <SOSButton variant="inline" />
         </motion.div>
 
         {/* Stats Row */}
