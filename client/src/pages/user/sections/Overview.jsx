@@ -45,7 +45,7 @@ export default function Overview() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
-              className={'rounded-2xl p-5 border ' + tile.bg + ' ' + tile.border}
+              className={'rounded-2xl p-5 border hover-lift ' + tile.bg + ' ' + tile.border}
             >
               <div className={'w-10 h-10 rounded-xl ' + tile.bg + ' flex items-center justify-center mb-3'}>
                 <tile.icon size={20} className={tile.color} />

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import ThemeToggle from '../../components/common/ThemeToggle';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, BedDouble, UserRound, ArrowLeftRight,
@@ -108,9 +109,12 @@ export default function HospitalDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 flex">
+    <div className="min-h-screen bg-slate-950 flex relative">
+      {/* Ambient orbs */}
+      <div className="ambient-orb w-96 h-96 bg-teal-500/8 -top-20 -left-20 fixed" />
+      <div className="ambient-orb w-96 h-96 bg-violet-500/8 bottom-0 right-0 fixed" />
       {/* Desktop Sidebar */}
-      <div className="w-60 shrink-0 bg-slate-900/60 border-r border-white/5 fixed left-0 top-0 h-full z-30 hidden lg:block">
+      <div className="sidebar-panel w-60 shrink-0 bg-slate-900/60 border-r border-white/5 fixed left-0 top-0 h-full z-30 hidden lg:block">
         <SidebarContent />
       </div>
 
@@ -137,7 +141,7 @@ export default function HospitalDashboard() {
       {/* Main */}
       <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
         {/* Topbar */}
-        <div className="sticky top-0 z-20 bg-slate-950/80 backdrop-blur border-b border-white/5 px-6 py-4 flex items-center justify-between">
+        <div className="topbar-panel sticky top-0 z-20 bg-slate-950/80 backdrop-blur border-b border-white/5 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-400 hover:text-white">
               <Menu size={22} />
@@ -147,6 +151,7 @@ export default function HospitalDashboard() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle size="sm" />
             <button className="relative p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />

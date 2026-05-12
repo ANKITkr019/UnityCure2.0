@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import SOSButton from '../components/common/SOSButton';
+import ThemeToggle from '../components/common/ThemeToggle';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -31,9 +32,8 @@ function Navbar() {
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'glass border-b border-white/5 py-3' : 'py-5'
-      }`}
+      className={'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ' +
+        (scrolled ? 'glass border-b border-white/5 py-3 topbar-panel' : 'py-5')}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
@@ -57,6 +57,7 @@ function Navbar() {
 
         {/* CTA Buttons */}
         <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           <button
             onClick={() => navigate('/login')}
             className="px-4 py-2 text-sm text-slate-300 hover:text-white transition-colors"
@@ -132,10 +133,10 @@ function Hero() {
   return (
     <section className="relative min-h-screen flex flex-col justify-center pt-24 overflow-hidden">
       {/* Background blobs */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-3xl" />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-teal-500/12 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-1/4 -right-32 w-[500px] h-[500px] bg-violet-500/12 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-teal-500/5 rounded-full blur-[120px]" />
 
         {/* Grid overlay */}
         <div
